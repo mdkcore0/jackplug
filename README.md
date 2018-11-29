@@ -1,3 +1,3 @@
-# jack_plug
+# JackPlug
 
 ZMQ based microservice communications library
