@@ -16,7 +16,9 @@ import uuid
 import zmq
 from zmq.eventloop import ioloop, zmqstream
 
-from utils import Configuration
+from .utils import Configuration
+from .utils import IPCEndpoint
+
 from simb.pilsner import log as logging
 
 log = logging.getLogger('Service')
@@ -25,15 +27,15 @@ log = logging.getLogger('Service')
 class JackBase(object):
     """Base Jack class
 
-    This handles low level communication, plus heartbeat"""
+    This handles low level communication (plus heartbeat), server side"""
     _timeout = None
 
-    # on linux, len(pathname) == 107
-    def __init__(self, service, pathname="/tmp/jack.plug"):
+    def __init__(self, service, endpoint=IPCEndpoint()):
         """Class contructor
 
         :param service: name (or identifier) of this jack
-        :param pathname: IPC pathname to be used (default: /tmp/jack.plug)
+        :param endpoint: IPCEndpoint(pathname) or TCPEndpoint(address, port) to
+        connect (default pathname: /tmp/jack.plug, default port: 3559)
         """
         self.context = zmq.Context.instance()
 
@@ -54,7 +56,7 @@ class JackBase(object):
         # do not queue message if connection not completed (zmq level)
         self.socket.setsockopt(zmq.IMMEDIATE, 1)
 
-        self.socket.connect("ipc://" + pathname)
+        self.socket.connect(endpoint.endpoint)
 
         self.socket_stream = zmqstream.ZMQStream(self.socket)
         self.socket_stream.on_recv(self.recv)
