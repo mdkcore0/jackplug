@@ -14,6 +14,7 @@ import signal
 import uuid
 
 import zmq
+from zmq.utils import jsonapi
 from zmq.eventloop import ioloop, zmqstream
 
 from .utils import Configuration
@@ -59,7 +60,7 @@ class JackBase(object):
         self.socket.connect(endpoint.endpoint)
 
         self.socket_stream = zmqstream.ZMQStream(self.socket)
-        self.socket_stream.on_recv(self.recv)
+        self.socket_stream.on_recv(self._recv)
 
         self._conf = Configuration.instance()
         self._liveness = self._conf.ping_max_liveness
@@ -84,6 +85,9 @@ class JackBase(object):
     def heartbeat(self):
         """Send a ping message to the other endpoint"""
         JackBase.send(self, {"event": "ping", "data": {'id': self._identity}})
+
+    def _recv(self, message):
+        self.recv(jsonapi.loads(message[0]))
 
     def recv(self, message):
         """Receive a message

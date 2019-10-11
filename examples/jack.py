@@ -11,7 +11,6 @@ to the "server".
 import sys
 from random import randint
 
-from zmq.utils import jsonapi
 from zmq.eventloop import ioloop
 
 from jackplug.jack import JackBase
@@ -36,7 +35,6 @@ class JackTest(JackBase):
         print("Timeout occurred!")
 
     def recv(self, message):
-        message = jsonapi.loads(message[0])
         print("Recv: %s" % message)
 
     def send(self):
