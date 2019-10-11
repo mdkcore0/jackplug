@@ -6,7 +6,7 @@ class Configuration(object):
     """Configuration class for Jack and Plug"""
     _instance = None
 
-    DEFAULT_PATHNAME = "/tmp/jack.plug"
+    DEFAULT_IPC_PATHNAME = "/tmp/jack.plug"
     DEFAULT_TCP_PORT = "3559"
 
     # XXX read from config file
@@ -33,7 +33,7 @@ class IPCEndpoint():
     endpoint = ""
 
     # on linux, len(pathname) == 107
-    def __init__(self, pathname=Configuration.DEFAULT_PATHNAME):
+    def __init__(self, pathname=Configuration.DEFAULT_IPC_PATHNAME):
         """Class constructor
 
         :param pathname: IPC pathname to connect (default: /tmp/jack.plug)
