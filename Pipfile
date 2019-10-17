@@ -1,0 +1,16 @@
+[[source]]
+name = "pypi"
+url = "https://pypi.org/simple"
+verify_ssl = true
+
+# TODO add simb-pilsner to [packages] when having the package
+[dev-packages]
+simb-pilsner = {editable = true,path = "./../pilsner/python"}
+jackplug = {editable = true,path = "."}
+
+[packages]
+pyzmq = "==18.1.0"
+tornado = "==4.5.3"
+
+[requires]
+python_version = "3.8"
