@@ -163,8 +163,7 @@ class PlugBase(object):
         if self.socket.closed:
             return
 
-        self.socket.send_multipart([service.encode("ascii"),
-                                    jsonapi.dumps(message)])
+        self.socket.send_multipart([service, jsonapi.dumps(message)])
 
     def start(self):
         """Initialize all plug loopers"""
