@@ -6,7 +6,7 @@ as default: */tmp/jack.plug*), and **tcp** (*TCPEndpoint*, using *3559* as the d
 port number).
 
 ## Requirements
-* pyzmq 18.1.0
+* pyzmq 19.0.2
 * tornado 4.5.3
 * simb.pilsner
 
@@ -29,9 +29,9 @@ port number).
 
     pipenv should install the required python version and activate a new virtualenv; if it not occurs, run the following and repeat the command above:
 
-        $ pyenv install 3.8.0
-        $ pyenv local 3.8.0
-        $ pipenv --python 3.8.0
+        $ pyenv install 3.8.5
+        $ pyenv local 3.8.5
+        $ pipenv --python 3.8.5
 
 - Finally activate the virtualenv and you are all set:
 

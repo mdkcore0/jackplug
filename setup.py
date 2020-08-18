@@ -9,7 +9,7 @@ setup(
     packages=find_packages(),
     install_requires=[
         'simb.pilsner',
-        'pyzmq==18.1.0',
+        'pyzmq==19.0.2',
         'tornado==4.5.3'
     ],
     long_description=open('README.md').read(),
