@@ -5,37 +5,33 @@ Two transports are supported: **ipc** (though *IPCEndpoint*, using the following
 as default: */tmp/jack.plug*), and **tcp** (*TCPEndpoint*, using *3559* as the default
 port number).
 
+### Development requirements:
+* python 2.7 (or 3.8)
+* pyenv 1.2.20 (optional)
+
 ## Requirements
 * pyzmq 19.0.2
 * tornado 4.5.3
 * simb.pilsner
 
 ## Installation instructions for development:
-- Install pyenv and pipenv:
+- Install pyenv (optional):
     - macos:
 
-            $ brew install pyenv pipenv
+            $ brew install pyenv
 
     - linux:
         - Install pyenv from your package manager, or follow [these instructions](https://github.com/pyenv/pyenv#basic-github-checkout)
 
-        - Install pipenv:
+- Create a new python virtualenv (optional):
 
-                $ pip install -U --user pipenv
+        $ pyenv install 2.7.18
+        $ pyenv virtualenv 2.7.18 jackplug
+        $ pyenv activate jackplug
 
-- Create a new python virtualenv:
+- Install python requirements:
 
-        $ pipenv shell
-
-    pipenv should install the required python version and activate a new virtualenv; if it not occurs, run the following and repeat the command above:
-
-        $ pyenv install 3.8.5
-        $ pyenv local 3.8.5
-        $ pipenv --python 3.8.5
-
-- Finally activate the virtualenv and you are all set:
-
-        $ pipenv install --dev
+        $ pip install -r requirements.txt
 
 ## Examples
 An example of the use of this library can be found on the *examples* folder, and
