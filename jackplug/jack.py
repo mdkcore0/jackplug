@@ -42,7 +42,7 @@ class JackBase(object):
 
         self.socket = self.context.socket(zmq.DEALER)
         self._identity = str(uuid.uuid4())
-        self.socket.identity = service.encode()
+        self.socket.identity = service
 
         # use with flags=zmq.DONTWAIT on send; also, any new message sent after
         # reaching HWM will be discarded (dealer)

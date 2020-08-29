@@ -94,7 +94,7 @@ class PlugBase(object):
                         self._services_ping[service]['alive'] = False
 
                         if self._timeout_callback:
-                            self._timeout_callback(service)
+                            self._timeout_callback(service.decode())
                 elif liveness < 0:
                     del self._services_ping[service]
                 else:
@@ -138,7 +138,7 @@ class PlugBase(object):
                 self._services_ping[service]['id'] = identity
 
                 if self._connection_callback:
-                    self._connection_callback(service, True)
+                    self._connection_callback(service.decode(), True)
 
             return
 
