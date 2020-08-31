@@ -5,14 +5,13 @@ Two transports are supported: **ipc** (though *IPCEndpoint*, using the following
 as default: */tmp/jack.plug*), and **tcp** (*TCPEndpoint*, using *3559* as the default
 port number).
 
+## Requirements
+* Tornado version 4.5.3 is currently needed, as newer versions does not play
+  well on latest pyzmq packages.
+
 ### Development requirements:
 * python 2.7 (or 3.8)
 * pyenv 1.2.20 (optional)
-
-## Requirements
-* pyzmq 19.0.2
-* tornado 4.5.3
-* simb.pilsner
 
 ## Installation instructions for development:
 - Install pyenv (optional):
