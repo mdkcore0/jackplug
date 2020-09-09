@@ -7,7 +7,10 @@ setup(
     author='Rodrigo Oliveira',
     author_email='rodrigo@byne.com.br',
     packages=find_packages(),
-    install_requires=['simb.pilsner',
-                      'pyzmq==15.4.0'],
+    install_requires=[
+        'simb.pilsner',
+        'pyzmq==19.0.2',
+        'tornado==4.5.3'
+    ],
     long_description=open('README.md').read(),
 )

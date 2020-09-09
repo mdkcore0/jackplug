@@ -18,7 +18,9 @@ import zmq
 from zmq.utils import jsonapi
 from zmq.eventloop import ioloop, zmqstream
 
-from utils import Configuration
+from .utils import Configuration
+from .utils import IPCEndpoint
+
 from simb.pilsner import log as logging
 
 log = logging.getLogger('Service')
@@ -27,12 +29,12 @@ log = logging.getLogger('Service')
 class PlugBase(object):
     """Base Plug class
 
-    This handles low level communication, plus hearbeat"""
+    This handles low level communication (plus hearbeat), microservice side"""
     _services_ping = dict()
     _timeout_callback = None
+    _connection_callback = None
 
-    # on linux, len(pathname) == 107
-    def __init__(self, pathname="/tmp/jack.plug"):
+    def __init__(self, endpoint=IPCEndpoint()):
         """Class constructor
 
         :param pathname: IPC pathname to be used (default: /tmp/jack.plug)
@@ -40,7 +42,8 @@ class PlugBase(object):
         self.context = zmq.Context.instance()
 
         self.socket = self.context.socket(zmq.ROUTER)
-        self.socket.bind("ipc://" + pathname)
+
+        self.socket.bind(endpoint.endpoint)
 
         # XXX check zmq.asyncio.Socket with recv_multipart
         self.socket_stream = zmqstream.ZMQStream(self.socket)
@@ -65,7 +68,8 @@ class PlugBase(object):
 
     def heartbeat(self):
         """Check if known jacks are alive (pinging us)"""
-        for service in self._services_ping.keys():
+        services = list(self._services_ping.keys())
+        for service in services:
             last_ping = self._services_ping[service]['last_ping']
             liveness = self._services_ping[service]['liveness']
 
@@ -90,7 +94,7 @@ class PlugBase(object):
                         self._services_ping[service]['alive'] = False
 
                         if self._timeout_callback:
-                            self._timeout_callback(service)
+                            self._timeout_callback(service.decode())
                 elif liveness < 0:
                     del self._services_ping[service]
                 else:
@@ -134,7 +138,7 @@ class PlugBase(object):
                 self._services_ping[service]['id'] = identity
 
                 if self._connection_callback:
-                    self._connection_callback(service, True)
+                    self._connection_callback(service.decode(), True)
 
             return
 
@@ -159,8 +163,7 @@ class PlugBase(object):
         if self.socket.closed:
             return
 
-        self.socket.send_multipart([service.encode("ascii"),
-                                    jsonapi.dumps(message)])
+        self.socket.send_multipart([service, jsonapi.dumps(message)])
 
     def start(self):
         """Initialize all plug loopers"""
