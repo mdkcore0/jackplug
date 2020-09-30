@@ -10,7 +10,7 @@ port number).
   well on latest pyzmq packages.
 
 ### Development requirements:
-* python 2.7 (or 3.8)
+* python 3.8
 * pyenv 1.2.20 (optional)
 
 ## Installation instructions for development:
@@ -24,8 +24,8 @@ port number).
 
 - Create a new python virtualenv (optional):
 
-        $ pyenv install 2.7.18
-        $ pyenv virtualenv 2.7.18 jackplug
+        $ pyenv install 3.8.5
+        $ pyenv virtualenv 3.8.5 jackplug
         $ pyenv activate jackplug
 
 - Install python requirements:
