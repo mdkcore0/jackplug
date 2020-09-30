@@ -8,7 +8,6 @@ setup(
     author_email='rodrigo@byne.com.br',
     packages=find_packages(),
     install_requires=[
-        'simb.pilsner',
         'pyzmq==19.0.2',
         'tornado==4.5.3'
     ],
