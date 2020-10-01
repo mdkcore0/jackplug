@@ -1,6 +1,3 @@
-#!/usr/bin/env python
-# -*- coding: UTF-8 -*-
-
 """
 Copyright (c) 2016 BYNE. All rights reserved.
 
@@ -10,9 +7,9 @@ We are calling ZMQ's 'identity' as 'service', to ease the understanding of
 services.
 """
 
+import logging
 import signal
 import uuid
-
 import zmq
 from zmq.utils import jsonapi
 from zmq.eventloop import ioloop, zmqstream
@@ -20,9 +17,7 @@ from zmq.eventloop import ioloop, zmqstream
 from .utils import Configuration
 from .utils import IPCEndpoint
 
-from simb.pilsner import log as logging
-
-log = logging.getLogger('Service')
+log = logging.getLogger("JackPlug")
 
 
 class JackBase(object):
@@ -81,6 +76,13 @@ class JackBase(object):
         ioloop.IOLoop.instance().stop()
         self.socket_stream.close()
         self.socket.close()
+
+    @staticmethod
+    def set_logger(logger):
+        global log
+
+        log.propagate = False
+        log = logger
 
     def heartbeat(self):
         """Send a ping message to the other endpoint"""

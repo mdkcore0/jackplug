@@ -1,6 +1,3 @@
-#!/usr/bin/env python
-# -*- coding: UTF-8 -*-
-
 """
 Copyright (c) 2016 BYNE. All rights reserved.
 
@@ -71,5 +68,5 @@ if __name__ == '__main__':
     elif use_tcp:
         endpoint = TCPEndpoint(address="127.0.0.1", port="1234")
 
-    jack = JackTest(service=ident, endpoint=endpoint)
+    jack = JackTest(service=ident.encode(), endpoint=endpoint)
     print("Exiting Jack...")

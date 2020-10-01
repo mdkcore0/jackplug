@@ -1,6 +1,3 @@
-#!/usr/bin/env python
-# -*- coding: UTF-8 -*-
-
 """
 Copyright (c) 2016 BYNE. All rights reserved.
 
@@ -10,9 +7,10 @@ We are calling ZMQ's 'identity' as 'service', to ease the understanding of the
 services.
 """
 
-import time
+import logging
 import signal
 import threading
+import time
 
 import zmq
 from zmq.utils import jsonapi
@@ -21,9 +19,8 @@ from zmq.eventloop import ioloop, zmqstream
 from .utils import Configuration
 from .utils import IPCEndpoint
 
-from simb.pilsner import log as logging
 
-log = logging.getLogger('Service')
+log = logging.getLogger("JackPlug")
 
 
 class PlugBase(object):
@@ -65,6 +62,13 @@ class PlugBase(object):
             self.socket.close()
         except Exception as e:
             log.error("An error occurred while closing socket: %s", e)
+
+    @staticmethod
+    def set_logger(logger):
+        global log
+
+        log.propagate = False
+        log = logger
 
     def heartbeat(self):
         """Check if known jacks are alive (pinging us)"""
