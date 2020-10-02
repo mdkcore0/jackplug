@@ -27,6 +27,7 @@ class PlugBase(object):
     """Base Plug class
 
     This handles low level communication (plus hearbeat), microservice side"""
+
     _services_ping = dict()
     _timeout_callback = None
     _connection_callback = None
@@ -48,7 +49,8 @@ class PlugBase(object):
 
         self._conf = Configuration.instance()
         self._heartbeat_loop = ioloop.PeriodicCallback(
-            self.heartbeat, self._conf.ping_interval)
+            self.heartbeat, self._conf.ping_interval
+        )
 
         self._heartbeat_loop.start()
 
@@ -74,36 +76,42 @@ class PlugBase(object):
         """Check if known jacks are alive (pinging us)"""
         services = list(self._services_ping.keys())
         for service in services:
-            last_ping = self._services_ping[service]['last_ping']
-            liveness = self._services_ping[service]['liveness']
+            last_ping = self._services_ping[service]["last_ping"]
+            liveness = self._services_ping[service]["liveness"]
 
             now = self._now()
             if now - last_ping > self._conf.ping_interval:
                 liveness = liveness - 1
                 max_str = ""
                 if liveness + 1 == self._conf.ping_max_liveness:
-                    max_str = " (MAX) | interval: %sms" %\
-                            self._conf.ping_interval
+                    max_str = (
+                        " (MAX) | interval: %sms" % self._conf.ping_interval
+                    )
 
-                log.debug("Plug: Service '%s' liveness: %s%s", service,
-                          liveness, max_str)
+                log.debug(
+                    "Plug: Service '%s' liveness: %s%s",
+                    service,
+                    liveness,
+                    max_str,
+                )
 
                 if liveness == 0:
-                    if self._services_ping[service]['alive']:
-                        log.debug("Plug: Service '%s' seems unavailable now",
-                                  service)
+                    if self._services_ping[service]["alive"]:
+                        log.debug(
+                            "Plug: Service '%s' seems unavailable now", service
+                        )
 
-                        self._services_ping[service]['last_ping'] = now
-                        self._services_ping[service]['liveness'] = liveness
-                        self._services_ping[service]['alive'] = False
+                        self._services_ping[service]["last_ping"] = now
+                        self._services_ping[service]["liveness"] = liveness
+                        self._services_ping[service]["alive"] = False
 
                         if self._timeout_callback:
                             self._timeout_callback(service.decode())
                 elif liveness < 0:
                     del self._services_ping[service]
                 else:
-                    self._services_ping[service]['last_ping'] = now
-                    self._services_ping[service]['liveness'] = liveness
+                    self._services_ping[service]["last_ping"] = now
+                    self._services_ping[service]["liveness"] = liveness
 
     def _recv(self, message):
         """Receive a message from any jack
@@ -118,28 +126,32 @@ class PlugBase(object):
         # setup heartbeat settings for this service (or update it)
         # any message is treated as ping
         service_ping = {
-            'last_ping': self._now(),
-            'liveness': self._conf.ping_max_liveness,
+            "last_ping": self._now(),
+            "liveness": self._conf.ping_max_liveness,
         }
 
         if service in self._services_ping:
             self._services_ping[service].update(service_ping)
         else:
-            service_ping['alive'] = False
-            service_ping['id'] = -1
+            service_ping["alive"] = False
+            service_ping["id"] = -1
             self._services_ping[service] = service_ping
 
         # do not propagate ping messages
-        if message.get('event', None) == 'ping':
-            identity = message.get('data')['id']
+        if message.get("event", None) == "ping":
+            identity = message.get("data")["id"]
 
-            if 'alive' in self._services_ping[service] and\
-               not self._services_ping[service]['alive']:
-                self._services_ping[service]['alive'] = True
+            if (
+                "alive" in self._services_ping[service]
+                and not self._services_ping[service]["alive"]
+            ):
+                self._services_ping[service]["alive"] = True
 
-            if 'id' in self._services_ping[service] and\
-               self._services_ping[service]['id'] != identity:
-                self._services_ping[service]['id'] = identity
+            if (
+                "id" in self._services_ping[service]
+                and self._services_ping[service]["id"] != identity
+            ):
+                self._services_ping[service]["id"] = identity
 
                 if self._connection_callback:
                     self._connection_callback(service.decode(), True)
@@ -175,8 +187,10 @@ class PlugBase(object):
 
         # handle signal if, and only, if we are running on the main thread
         if isinstance(threading.current_thread(), threading._MainThread):
-            signal.signal(signal.SIGINT, lambda sig, frame:
-                          loop.add_callback_from_signal(self.close))
+            signal.signal(
+                signal.SIGINT,
+                lambda sig, frame: loop.add_callback_from_signal(self.close),
+            )
 
         try:
             loop.start()
@@ -194,7 +208,8 @@ class PlugBase(object):
         self.socket_stream.on_recv(self._recv)
 
         self._heartbeat_loop = ioloop.PeriodicCallback(
-            self.heartbeat, self._conf.ping_interval)
+            self.heartbeat, self._conf.ping_interval
+        )
 
         self._heartbeat_loop.start()
 
@@ -224,6 +239,7 @@ class PlugBase(object):
 
 class Plug(PlugBase):
     """Plug class, ready for use python object"""
+
     _listener = None
 
     def __init__(self, listener=None, **kwargs):

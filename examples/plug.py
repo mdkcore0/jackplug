@@ -28,7 +28,7 @@ class PlugTest(PlugBase):
         self.send(service, message)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     if len(sys.argv) < 2:
         print("Thou shalt run as: %s [ipc | tcp]" % sys.argv[0])
         sys.exit()
@@ -36,10 +36,10 @@ if __name__ == '__main__':
     use_ipc = False
     use_tcp = False
 
-    if sys.argv[1] == 'ipc':
+    if sys.argv[1] == "ipc":
         print("Using IPC transport")
         use_ipc = True
-    elif sys.argv[1] == 'tcp':
+    elif sys.argv[1] == "tcp":
         print("Using TCP transport")
         use_tcp = True
     else:
