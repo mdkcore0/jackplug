@@ -4,6 +4,7 @@
 
 class Configuration(object):
     """Configuration class for Jack and Plug"""
+
     _instance = None
 
     DEFAULT_IPC_PATHNAME = "/tmp/jack.plug"
@@ -24,11 +25,12 @@ class Configuration(object):
         return self._instance
 
 
-class IPCEndpoint():
+class IPCEndpoint:
     """IPCEndpoint
 
     A IPC transport wrapper
     """
+
     pathname = ""
     endpoint = ""
 
@@ -43,11 +45,12 @@ class IPCEndpoint():
         self.endpoint = "ipc://%s" % self.pathname
 
 
-class TCPEndpoint():
+class TCPEndpoint:
     """TCPEndpoint
 
     A TCP transport wrapper
     """
+
     address = ""
     port = ""
     endpoint = ""

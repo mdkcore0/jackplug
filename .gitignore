@@ -4,4 +4,7 @@
 JackPlug.egg-info/
 build/
 dist/
+
+.python-version
 WORK-*
+__pycache__
