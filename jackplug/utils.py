@@ -1,5 +1,24 @@
-#!/usr/bin/env python
-# -*- coding: UTF-8 -*-
+import asyncio
+
+
+class PeriodicCall:
+    def __init__(self, interval, callback):
+        self._interval = interval
+        self._callback = callback
+
+    async def _call(self):
+        while True:
+            await asyncio.sleep(self._interval)
+            await self._callback()
+
+    async def start(self):
+        if not self._callback:
+            return
+
+        self._task = asyncio.create_task(self._call())
+
+    def stop(self):
+        self._task.cancel()
 
 
 class Configuration(object):
@@ -10,8 +29,8 @@ class Configuration(object):
     DEFAULT_IPC_PATHNAME = "/tmp/jack.plug"
     DEFAULT_TCP_PORT = "3559"
 
-    # XXX read from config file
-    ping_interval = 3000.0
+    # XXX read from config file?
+    ping_interval = 3
     ping_max_liveness = 3
 
     def __init__(self):
@@ -42,7 +61,7 @@ class IPCEndpoint:
         """
         self.pathname = pathname
 
-        self.endpoint = "ipc://%s" % self.pathname
+        self.endpoint = f"ipc://{self.pathname}"
 
 
 class TCPEndpoint:
@@ -68,4 +87,4 @@ class TCPEndpoint:
         self.address = address
         self.port = port
 
-        self.endpoint = "tcp://%s:%s" % (self.address, self.port)
+        self.endpoint = f"tcp://{self.address}:{self.port}"
