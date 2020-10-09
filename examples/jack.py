@@ -6,13 +6,15 @@ to the "server".
 """
 
 import sys
-from random import randint
+import signal
+import asyncio
 
-from zmq.eventloop import ioloop
+from random import randint
 
 from jackplug.jack import JackBase
 from jackplug.utils import IPCEndpoint
 from jackplug.utils import TCPEndpoint
+from jackplug.utils import PeriodicCall
 
 
 class JackTest(JackBase):
@@ -21,27 +23,41 @@ class JackTest(JackBase):
     def __init__(self, *args, **kwargs):
         super(JackTest, self).__init__(*args, **kwargs)
 
-        print("Starting send loop")
-        self._send_loop = ioloop.PeriodicCallback(self.send, 2000)
-        self._send_loop.start()
-
+        self._send_loop = PeriodicCall(2, self.send)
         self.on_timeout(self._timeout_occurred)
-        self.start()
 
-    def _timeout_occurred(self):
+    async def start(self):
+        print("Starting send loop")
+
+        loop = asyncio.get_running_loop()
+        for signame in {'SIGINT', 'SIGTERM'}:
+            loop.add_signal_handler(
+                getattr(signal, signame),
+                self.close
+            )
+
+        try:
+            await asyncio.gather(
+                JackBase.start(self),
+                self._send_loop.start()
+            )
+        except asyncio.CancelledError:
+            raise
+
+    async def _timeout_occurred(self):
         print("Timeout occurred!")
 
-    def recv(self, message):
-        print("Recv: %s" % message)
+    async def recv(self, message):
+        print(f"Recv: {message}")
 
-    def send(self):
+    async def send(self):
         message = {"event": "message", "data": "ABC"}
-        JackBase.send(self, message)
+        await JackBase.send(self, message)
 
 
 if __name__ == "__main__":
     if len(sys.argv) < 2:
-        print("Thou shalt run as: %s [ipc | tcp]" % sys.argv[0])
+        print(f"Thou shalt run as: {sys.argv[0]} [ipc | tcp]")
         sys.exit()
 
     use_ipc = False
@@ -54,11 +70,11 @@ if __name__ == "__main__":
         print("Using TCP transport")
         use_tcp = True
     else:
-        print("Unknown argument: %s" % sys.argv[1])
+        print(f"Unknown argument: {sys.argv[1]}")
         sys.exit()
 
-    ident = "Jack%s" % (randint(0, 1000))
-    print("Acting as Jack (%s)" % ident)
+    ident = f"Jack{randint(0, 1000)}"
+    print(f"Acting as Jack ({ident})")
 
     endpoint = None
     if use_ipc:
@@ -67,4 +83,12 @@ if __name__ == "__main__":
         endpoint = TCPEndpoint(address="127.0.0.1", port="1234")
 
     jack = JackTest(service=ident.encode(), endpoint=endpoint)
+
+    try:
+        asyncio.run(jack.start())
+    except asyncio.CancelledError:
+        pass
+    finally:
+        pass
+
     print("Exiting Jack...")

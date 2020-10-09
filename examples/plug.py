@@ -5,6 +5,9 @@ This example subclass PlugBase to act as a plug ("server").
 """
 
 import sys
+import signal
+import asyncio
+
 from jackplug.plug import PlugBase
 from jackplug.utils import IPCEndpoint
 from jackplug.utils import TCPEndpoint
@@ -15,22 +18,32 @@ class PlugTest(PlugBase):
         super(PlugTest, self).__init__(*args, **kwargs)
 
         self.on_timeout(self._timeout_occurred)
-        self.start()
 
-    def _timeout_occurred(self, service):
-        print("Timeout occurred on service (plug) %s!" % service)
+    async def _timeout_occurred(self, service):
+        print(f"Timeout occurred on service (plug) {service}!")
 
-    def recv(self, service, message):
+    async def start(self):
+        print("Waiting for connections")
 
-        print("Recv (%s): %s" % (message, service))
+        loop = asyncio.get_running_loop()
+        for signame in {'SIGINT', 'SIGTERM'}:
+            loop.add_signal_handler(
+                getattr(signal, signame),
+                self.close
+            )
+
+        await PlugBase.start(self)
+
+    async def recv(self, service, message):
+        print(f"Recv ({service}): {message}")
         print("Ok, answering :)")
 
-        self.send(service, message)
+        await self.send(service, message)
 
 
 if __name__ == "__main__":
     if len(sys.argv) < 2:
-        print("Thou shalt run as: %s [ipc | tcp]" % sys.argv[0])
+        print(f"Thou shalt run as: {sys.argv[0]} [ipc | tcp]")
         sys.exit()
 
     use_ipc = False
@@ -43,7 +56,7 @@ if __name__ == "__main__":
         print("Using TCP transport")
         use_tcp = True
     else:
-        print("Unknown argument: %s" % sys.argv[1])
+        print(f"Unknown argument: {sys.argv[1]}")
         sys.exit()
 
     print("Acting as Plug")
@@ -55,4 +68,12 @@ if __name__ == "__main__":
         endpoint = TCPEndpoint(address="*", port="1234")
 
     plug = PlugTest(endpoint=endpoint)
+
+    try:
+        asyncio.run(plug.start())
+    except asyncio.CancelledError:
+        pass
+    finally:
+        pass
+
     print("Exiting Plug...")
