@@ -7,23 +7,23 @@ We are calling ZMQ's 'identity' as 'service', to ease the understanding of the
 services.
 """
 
+import asyncio
 import logging
-import signal
-import threading
 import time
 
 import zmq
+import zmq.asyncio
 from zmq.utils import jsonapi
-from zmq.eventloop import ioloop, zmqstream
 
 from .utils import Configuration
 from .utils import IPCEndpoint
+from .utils import PeriodicCall
 
 
 log = logging.getLogger("JackPlug")
 
 
-class PlugBase(object):
+class PlugBase:
     """Base Plug class
 
     This handles low level communication (plus hearbeat), microservice side"""
@@ -37,30 +37,19 @@ class PlugBase(object):
 
         :param pathname: IPC pathname to be used (default: /tmp/jack.plug)
         """
-        self.context = zmq.Context.instance()
-
-        self.socket = self.context.socket(zmq.ROUTER)
-
-        self.socket.bind(endpoint.endpoint)
-
-        # XXX check zmq.asyncio.Socket with recv_multipart
-        self.socket_stream = zmqstream.ZMQStream(self.socket)
-        self.socket_stream.on_recv(self._recv)
+        self.socket = None
+        self._endpoint = endpoint
 
         self._conf = Configuration.instance()
-        self._heartbeat_loop = ioloop.PeriodicCallback(
-            self.heartbeat, self._conf.ping_interval
-        )
 
-        self._heartbeat_loop.start()
+        self._heartbeat_loop = PeriodicCall(
+            self._conf.ping_interval, self.heartbeat
+        )
 
     def close(self):
         """Do close Plug with its socket and loopers"""
-        ioloop.IOLoop.instance().stop()
-
         try:
             self.socket.setsockopt(zmq.LINGER, 0)
-            self.socket_stream.close()
             self.socket.close()
         except Exception as e:
             log.error("An error occurred while closing socket: %s", e)
@@ -72,7 +61,7 @@ class PlugBase(object):
         log.propagate = False
         log = logger
 
-    def heartbeat(self):
+    async def heartbeat(self):
         """Check if known jacks are alive (pinging us)"""
         services = list(self._services_ping.keys())
         for service in services:
@@ -84,9 +73,7 @@ class PlugBase(object):
                 liveness = liveness - 1
                 max_str = ""
                 if liveness + 1 == self._conf.ping_max_liveness:
-                    max_str = (
-                        " (MAX) | interval: %sms" % self._conf.ping_interval
-                    )
+                    max_str = f" (MAX) | interval: {self._conf.ping_interval}ms"
 
                 log.debug(
                     "Plug: Service '%s' liveness: %s%s",
@@ -106,14 +93,23 @@ class PlugBase(object):
                         self._services_ping[service]["alive"] = False
 
                         if self._timeout_callback:
-                            self._timeout_callback(service.decode())
+                            await self._timeout_callback(service.decode())
                 elif liveness < 0:
                     del self._services_ping[service]
                 else:
                     self._services_ping[service]["last_ping"] = now
                     self._services_ping[service]["liveness"] = liveness
 
-    def _recv(self, message):
+    async def _recv(self):
+        context = zmq.asyncio.Context.instance()
+        self.socket = context.socket(zmq.ROUTER)
+        self.socket.bind(self._endpoint.endpoint)
+
+        while True:
+            message = await self.socket.recv_multipart()
+            await self._process_message(message)
+
+    async def _process_message(self, message):
         """Receive a message from any jack
 
         Internally handles messages from jacks and prepare them to be consumed
@@ -154,13 +150,13 @@ class PlugBase(object):
                 self._services_ping[service]["id"] = identity
 
                 if self._connection_callback:
-                    self._connection_callback(service.decode(), True)
+                    await self._connection_callback(service.decode(), True)
 
             return
 
-        self.recv(service, message)
+        await self.recv(service, message)
 
-    def recv(self, service, message):
+    async def recv(self, service, message):
         """Receive a message
 
         Should be reimplemented on the derived class.
@@ -169,7 +165,7 @@ class PlugBase(object):
         """
         raise NotImplementedError
 
-    def send(self, service, message):
+    async def send(self, service, message):
         """Send a message
 
         Tries to send a message to a given service.
@@ -179,41 +175,14 @@ class PlugBase(object):
         if self.socket.closed:
             return
 
-        self.socket.send_multipart([service, jsonapi.dumps(message)])
+        await self.socket.send_multipart([service, jsonapi.dumps(message)])
 
-    def start(self):
+    async def start(self):
         """Initialize all plug loopers"""
-        loop = ioloop.IOLoop.instance()
-
-        # handle signal if, and only, if we are running on the main thread
-        if isinstance(threading.current_thread(), threading._MainThread):
-            signal.signal(
-                signal.SIGINT,
-                lambda sig, frame: loop.add_callback_from_signal(self.close),
-            )
-
-        try:
-            loop.start()
-        except RuntimeError as e:
-            log.debug("Plug: %s", e)
-        except zmq.ZMQError as e:
-            if e.errno != zmq.ENOTSOCK:
-                log.error("Error starting IOLoop: %s", e)
-
-    def restart(self):
-        del self.socket_stream
-        self._heartbeat_loop.stop()
-
-        self.socket_stream = zmqstream.ZMQStream(self.socket)
-        self.socket_stream.on_recv(self._recv)
-
-        self._heartbeat_loop = ioloop.PeriodicCallback(
-            self.heartbeat, self._conf.ping_interval
+        await asyncio.gather(
+            self._heartbeat_loop.start(),
+            self._recv()
         )
-
-        self._heartbeat_loop.start()
-
-        self.start()
 
     # apocalypse
     def _now(self):
@@ -251,7 +220,6 @@ class Plug(PlugBase):
         super(Plug, self).__init__(**kwargs)
 
         self._listener = listener
-        self.start()
 
     def recv(self, service, message):
         """PlugBase.recv reimplementation
