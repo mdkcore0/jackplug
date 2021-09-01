@@ -6,8 +6,7 @@ as default: */tmp/jack.plug*), and **tcp** (*TCPEndpoint*, using *3559* as the d
 port number).
 
 ## Requirements
-* Tornado version 4.5.3 is currently needed, as newer versions does not play
-  well on latest pyzmq packages.
+* pyzmq >= 19.0.2
 
 ### Development requirements:
 * python 3.8
